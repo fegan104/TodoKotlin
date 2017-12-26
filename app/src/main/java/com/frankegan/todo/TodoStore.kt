@@ -1,27 +1,35 @@
 package com.frankegan.todo
 
+import android.arch.lifecycle.MutableLiveData
 import android.arch.lifecycle.ViewModel
 
 /**
  * Created by frankegan on 12/24/17.
  */
-class TodoStore : Store<MutableList<Todo>>, ViewModel() {
+class TodoStore : Store<List<Todo>>, ViewModel() {
     //our state
-    override var state: MutableList<Todo> = mutableListOf()
+    override var state: MutableLiveData<List<Todo>> = MutableLiveData()
+
+    val initState = listOf<Todo>()
 
     override fun dispatch(action: Action) {
-        state = reduce(state, action)
+        println("oldState = ${state.value}")
+        println("action = ${action}")
+        state.value = reduce(state.value, action)
+        println("newState = ${state.value}")
+        println("⬇️")
     }
 
-    fun reduce(state: MutableList<Todo>, action: Action): MutableList<Todo> {
+    private fun reduce(state: List<Todo>?, action: Action): List<Todo> {
+        val newState = state ?: initState
+
         return when (action) {
-            is AddTodo -> state.toMutableList().apply { add(action.payload) }
-            is ToggleTodo -> state.map { t ->
-                if (t == action.payload) {
+            is AddTodo -> newState.toMutableList().apply { add(Todo(action.text, action.id)) }
+            is ToggleTodo -> newState.map { t ->
+                if (t.id == action.id) {
                     t.copy(completed = !t.completed)
                 } else t
             } as MutableList<Todo>
-            else -> state
         }
     }
 }
