@@ -18,33 +18,39 @@ import org.junit.runner.RunWith
 class ExampleInstrumentedTest {
     @get:Rule
     var uiThreadTestRule = UiThreadTestRule()
+    val MOCK_TEXT = "mock text"
 
     @Test
     fun testAppContext() {
         // Context of the app under test.
         val appContext = InstrumentationRegistry.getTargetContext()
         assertEquals("com.frankegan.todo", appContext.packageName)
-
     }
 
     @Test
     fun testAdd() {
-        val MOCK_TEXT = "mock text"
         val mockStore = TodoStore()
 
         uiThreadTestRule.runOnUiThread({ mockStore.dispatch(AddTodo(MOCK_TEXT)) })
-        assertEquals(mockStore.state.value?.get(0)?.text, MOCK_TEXT)
+        assertEquals(mockStore.state.value?.todos?.get(0)?.text, MOCK_TEXT)
     }
 
     @Test
     fun testToggle() {
-        val MOCK_TEXT = "mock text"
         val mockStore = TodoStore()
 
         uiThreadTestRule.runOnUiThread({ mockStore.dispatch(AddTodo(MOCK_TEXT, 100L)) })
-        assertEquals(mockStore.state.value?.size, 1)
+        assertEquals(mockStore.state.value?.todos?.size, 1)
 
         uiThreadTestRule.runOnUiThread({ mockStore.dispatch(ToggleTodo(100L)) })
-        assert(mockStore.state.value?.get(0)?.completed ?: false)
+        assert(mockStore.state.value?.todos?.get(0)?.completed ?: false)
+    }
+
+    @Test
+    fun testVisibility(){
+        val mockStore = TodoStore()
+        assert(mockStore.state.value?.visibility is All)
+        uiThreadTestRule.runOnUiThread({ mockStore.dispatch(SetVisibility(Completed())) })
+        assert(mockStore.state.value?.visibility is Completed)
     }
 }
