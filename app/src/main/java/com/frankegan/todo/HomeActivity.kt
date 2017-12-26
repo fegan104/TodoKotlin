@@ -11,27 +11,49 @@ import android.view.ViewGroup
 import android.widget.ArrayAdapter
 import kotlinx.android.synthetic.main.activity_home.*
 import kotlinx.android.synthetic.main.todo_item.view.*
+import org.jetbrains.anko.selector
 
 
-class HomeActivity : AppCompatActivity(), Renderer<List<Todo>> {
+class HomeActivity : AppCompatActivity(), Renderer<TodoModel> {
+    lateinit var store: TodoStore
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_home)
 
-        val store = ViewModelProviders.of(this).get(TodoStore::class.java)
+        store = ViewModelProviders.of(this).get(TodoStore::class.java)
         store.state.observe(this, Observer { newState -> render(newState) })
 
         listView.adapter = TodoAdapter(this, arrayOf())
         listView.setOnItemClickListener({ l, v, p, id -> store.dispatch(ToggleTodo(id)) })
 
         addButton.setOnClickListener { store.dispatch(AddTodo(editText.text.toString())) }
+        fab.setOnClickListener { openDialog() }
     }
 
-    override fun render(newState: List<Todo>?) {
+    override fun render(newState: TodoModel?) {
         if (newState == null) return
 
-        listView.adapter = TodoAdapter(this, newState.toTypedArray())
+        val keep: (Todo) -> Boolean = when (newState.visibility) {
+            is All -> { _ -> true }
+            is Active -> { t: Todo -> !t.completed }
+            is Completed -> {t: Todo -> t.completed }
+        }
+
+        listView.adapter = TodoAdapter(this,
+                newState.todos.filter { keep(it) }.toTypedArray())
+    }
+
+    fun openDialog() {
+        val options = resources.getStringArray(R.array.filter_options).asList()
+        selector(getString(R.string.filter_title), options, { d, i ->
+            val vis = when (i) {
+                1 -> Active()
+                2 -> Completed()
+                else -> All()
+            }
+            store.dispatch(SetVisibility(vis))
+        })
     }
 
     class TodoAdapter(context: Context, val todos: Array<Todo>) :

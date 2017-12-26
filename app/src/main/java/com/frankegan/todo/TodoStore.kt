@@ -6,11 +6,11 @@ import android.arch.lifecycle.ViewModel
 /**
  * Created by frankegan on 12/24/17.
  */
-class TodoStore : Store<List<Todo>>, ViewModel() {
+class TodoStore : Store<TodoModel>, ViewModel() {
     //our state
-    override var state: MutableLiveData<List<Todo>> = MutableLiveData()
+    override var state: MutableLiveData<TodoModel> = MutableLiveData()
 
-    val initState = listOf<Todo>()
+    val initState = TodoModel(listOf<Todo>(), All())
 
     override fun dispatch(action: Action) {
         println("oldState = ${state.value}")
@@ -20,16 +20,20 @@ class TodoStore : Store<List<Todo>>, ViewModel() {
         println("⬇️")
     }
 
-    private fun reduce(state: List<Todo>?, action: Action): List<Todo> {
+    private fun reduce(state: TodoModel?, action: Action): TodoModel {
         val newState = state ?: initState
 
         return when (action) {
-            is AddTodo -> newState.toMutableList().apply { add(Todo(action.text, action.id)) }
-            is ToggleTodo -> newState.map { t ->
-                if (t.id == action.id) {
-                    t.copy(completed = !t.completed)
-                } else t
-            } as MutableList<Todo>
+            is AddTodo -> newState.copy(todos = newState.todos.toMutableList().apply { add(Todo(action.text, action.id)) })
+            is ToggleTodo -> newState.copy(
+                    todos = newState.todos.map {
+                        if (it.id == action.id) {
+                            it.copy(completed = !it.completed)
+                        } else it
+                    } as MutableList<Todo>)
+            is SetVisibility -> newState.copy(visibility = action.visibility)
         }
     }
 }
+
+data class TodoModel(val todos: List<Todo>, val visibility: Visibility)
