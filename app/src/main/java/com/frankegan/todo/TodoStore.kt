@@ -1,20 +1,24 @@
 package com.frankegan.todo
 
+import android.arch.core.util.Function
 import android.arch.lifecycle.MutableLiveData
+import android.arch.lifecycle.Transformations
 import android.arch.lifecycle.ViewModel
+import com.frankegan.todo.model.*
 
 /**
  * Created by frankegan on 12/24/17.
  */
 class TodoStore : Store<TodoModel>, ViewModel() {
-    //our state
-    override var state: MutableLiveData<TodoModel> = MutableLiveData()
+    //Our state or "store"
+    private val state: MutableLiveData<TodoModel> = MutableLiveData()
 
-    val initState = TodoModel(listOf<Todo>(), All())
+    //Default state that will be rendered initially
+    private val initState = TodoModel(listOf(), Visibility.All())
 
     override fun dispatch(action: Action) {
         println("oldState = ${state.value}")
-        println("action = ${action}")
+        println("action = $action")
         state.value = reduce(state.value, action)
         println("newState = ${state.value}")
         println("⬇️")
@@ -34,6 +38,8 @@ class TodoStore : Store<TodoModel>, ViewModel() {
             is SetVisibility -> newState.copy(visibility = action.visibility)
         }
     }
-}
 
-data class TodoModel(val todos: List<Todo>, val visibility: Visibility)
+    override fun subscribe(renderer: Renderer<TodoModel>, func: Function<TodoModel, TodoModel>) {
+        renderer.render(Transformations.map(state, func))
+    }
+}

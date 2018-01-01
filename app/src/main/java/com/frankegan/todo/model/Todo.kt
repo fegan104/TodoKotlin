@@ -1,4 +1,4 @@
-package com.frankegan.todo
+package com.frankegan.todo.model
 
 /**
  * Created by frankegan on 12/24/17.
