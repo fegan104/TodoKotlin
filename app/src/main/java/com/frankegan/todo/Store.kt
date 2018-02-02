@@ -9,7 +9,9 @@ import com.frankegan.todo.model.Action
 interface Store<T> {
 
     /**
-     * This method applies the given action to the store in a pure functional manner.
+     * This method applies the given action to the store.
+     *
+     * @param action The action that we will use to create a new store.
      */
     fun dispatch(action: Action)
 
